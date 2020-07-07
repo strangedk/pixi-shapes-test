@@ -5,7 +5,10 @@ import ShapeFactory from '../service/ShapeFactory';
 import ShapeView from './shapes/ShapeView';
 import Controls from './Controls';
 
-class AppView extends PIXI.Graphics {    
+class AppView extends PIXI.Graphics {
+    private readonly backgroundLayer: PIXI.Graphics;
+    private readonly interactiveLayer: PIXI.Graphics;
+
     private spawnID: any;
 
     constructor(private app: PIXI.Application, private controller: AppController, private controls: Controls) {
@@ -17,10 +20,18 @@ class AppView extends PIXI.Graphics {
         controller.events.on(AppController.SHAPE_DELETED, this.shapeDeletedHandler);
         controls.events.on(Controls.PIECES_PER_SECOND_CHANGED, this.piecesPerSecondHandler)
 
-        this.on('click', this.appClickHandler);
+        this.backgroundLayer = new PIXI.Graphics();
+        this.backgroundLayer.on('click', this.appClickHandler);
+        this.backgroundLayer.interactive = true;
+        this.addChild(this.backgroundLayer);
+
+        this.interactiveLayer = new PIXI.Graphics();
+        this.interactiveLayer.on('click', this.appClickHandler);
+        this.interactiveLayer.interactive = true;
+        this.addChild(this.interactiveLayer);
 
         this.makeBackgroundAlpha();
-        this.spawnLaunch();        
+        this.spawnLaunch();
     }
 
     public animate = () => {
@@ -43,11 +54,11 @@ class AppView extends PIXI.Graphics {
 
         shape.x = shape.width + Math.floor(Math.random() * width - shape.width)
         shape.y = -shape.height;
-        this.addChild(shape);
+        this.interactiveLayer.addChild(shape);
     }
 
     private shapeDeletedHandler = (shape: ShapeView) => {
-        this.removeChild(shape);
+        this.interactiveLayer.removeChild(shape);
     }
 
     private piecesPerSecondHandler = () => {
@@ -55,6 +66,7 @@ class AppView extends PIXI.Graphics {
     }
 
     private appClickHandler = (event: PIXI.InteractionEvent) => {
+        console.log(event);
         if (event.target instanceof ShapeView) {
             const shape = event.target;
             this.controller.delete(shape);
@@ -62,8 +74,8 @@ class AppView extends PIXI.Graphics {
         } else {
             const mouse = this.app.renderer.plugins.interaction.mouse.global;
             const shape = this.createShape();
-            shape.x = mouse.x;
-            shape.y = mouse.y;
+            shape.x = mouse.x - shape.width / 2;
+            shape.y = mouse.y - shape.height / 2;
         }
     }
 
@@ -83,28 +95,54 @@ class AppView extends PIXI.Graphics {
         this.createShape();
     }
 
-    private makeBackgroundAlpha = () => {
-        this.clear()
+    private makeBackgroundAlpha = (x?: number, y?: number, w?: number, h?: number) => {
+        this.backgroundLayer.clear()
             .beginFill(0xffffff)
             .lineStyle(2, 0x444444)
             .drawRect(0, 0, this.app.renderer.width, this.app.renderer.height)
             .endFill();
+
+        this.backgroundLayer.lineStyle(2, 0xff0000);
+        this.backgroundLayer.drawRect(x, y, w, h);
     }
 
     private updateInfoData = () => {
         const labelQuantity = document.getElementById('quantityOfShapes');
         const labelArea = document.getElementById('areaOfShapes');
-        const { shapes } = this.controller;        
+        const { shapes } = this.controller;
 
         const quantity = `Quantity: ${shapes.length}`;
         if (labelQuantity.innerText !== quantity)
             labelQuantity.innerText = quantity;
-            
-        const area = "0";
+
+        const { x, y, w, h } = this.findBoundObjects();
+
+        const areaPx = Math.ceil(((w-x)*(h-y))).toString();
+        const area = `Area: ${areaPx}px`;
         if (labelArea.innerText !== area)
-            labelArea.innerText = area;    
-            
-        const bounds = this.getBounds();
+            labelArea.innerText = area;
+
+        this.makeBackgroundAlpha(x, y, w, h);
+    }
+
+    private findBoundObjects() {
+        const { shapes } = this.controller;
+
+        const left = Array.from(shapes).sort((a, b) => a.x - b.x);
+        const right = Array.from(shapes).sort((a, b) => b.x - a.x);
+        const top = Array.from(shapes).sort((a, b) => a.y - b.y);
+        const bottom = Array.from(shapes).sort((a, b) => b.y - a.y);
+
+        let x, y, w, h;
+
+        if (left.length && right.length && top.length && bottom.length) {
+            x = left[0].x;
+            y = top[0].y;
+            w = right[0].x + right[0].width;
+            h = bottom[0].y + bottom[0].height;
+        }
+
+        return { x, y, w, h }
     }
 }
 
