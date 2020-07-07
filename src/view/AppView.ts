@@ -80,7 +80,6 @@ class AppView extends PIXI.Graphics {
     }
 
     private spawnIteration = () => {
-        console.log('iteration');
         this.createShape();
     }
 
