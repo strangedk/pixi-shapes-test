@@ -3,33 +3,32 @@ import ShapeEnum from '../enum/ShapeEnum';
 import AppController from '../controller/AppController';
 import ShapeFactory from '../service/ShapeFactory';
 import ShapeView from './shapes/ShapeView';
+import Controls from './Controls';
 
-class AppView extends PIXI.Graphics {
-    private gravitySpeed: number = 0.4;
-    
-    private spawnDelay: number = 1;
+class AppView extends PIXI.Graphics {    
     private spawnID: any;
 
-    constructor(private app: PIXI.Application, private controller: AppController) {
+    constructor(private app: PIXI.Application, private controller: AppController, private controls: Controls) {
         super();
 
         this.interactive = true;
 
         controller.events.on(AppController.SHAPE_ADDED, this.shapeAddedHandler);
         controller.events.on(AppController.SHAPE_DELETED, this.shapeDeletedHandler);
+        controls.events.on(Controls.PIECES_PER_SECOND_CHANGED, this.piecesPerSecondHandler)
 
         this.on('click', this.appClickHandler);
 
         this.makeBackgroundAlpha();
-        this.spawnLaunch();
+        this.spawnLaunch();        
     }
 
     public animate = () => {
         const { shapes } = this.controller;
-        const { gravitySpeed, app } = this;
+        const { controls, app } = this;
 
         shapes.forEach(shape => {
-            shape.y += gravitySpeed;
+            shape.y += controls.gravitySpeed;
 
             if (shape.y > shape.height + app.renderer.height) {
                 this.controller.delete(shape);
@@ -49,6 +48,10 @@ class AppView extends PIXI.Graphics {
 
     private shapeDeletedHandler = (shape: ShapeView) => {
         this.removeChild(shape);
+    }
+
+    private piecesPerSecondHandler = () => {
+        this.spawnLaunch();
     }
 
     private appClickHandler = (event: PIXI.InteractionEvent) => {
@@ -73,10 +76,11 @@ class AppView extends PIXI.Graphics {
 
     private spawnLaunch = () => {
         clearInterval(this.spawnID);
-        this.spawnID = setInterval(this.spawnIteration, this.spawnDelay * 1000)
+        this.spawnID = setInterval(this.spawnIteration, this.controls.spawnDelay)
     }
 
     private spawnIteration = () => {
+        console.log('iteration');
         this.createShape();
     }
 
