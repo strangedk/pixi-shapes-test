@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>PIXI.js shapes</title>
+
+  <style>
+    .infoWrapper {
+      width: 100%;
+    }
+
+    .info {
+      margin: 1px;
+      padding: 2px;
+      width: 338px;
+      height: 22px;
+      border: solid 1px black;
+    }
+
+    .controlsWrapper {
+      border: solid 1px black;
+      display: flex;
+    }
+
+    input {
+      border: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="infoWrapper">
+    <span id="quantityOfShapes" class="info">Quantity:</span>
+    <span id="areaOfShapes" class="info">Area:</span>
+  </div>
+
+  <div id="canvasWrapper">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="controlsWrapper">
+    <div>
+      <span>Generator delay:</span>
+      <button id="piecesInSecondLess">&lt;</button>
+      <button id="piecesInSecondMore">&gt;</button>
+      <input id="piecesInSecondInput" readonly>
+    </div>
+
+    <div>
+      <span>Gravity value:</span>
+      <button id="gravityMore">&lt;</button>
+      <button id="gravityLess">&gt;</button>
+      <input id="gravitySpeedInput" readonly>
+    </div>
+  </div>
+
+  <script src="bundle.js"></script>
+</body>
+
+</html>
